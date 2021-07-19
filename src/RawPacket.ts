@@ -5,6 +5,9 @@
 import { RawBlock } from "./RawBlock";
 import { FactoryId, Model, ReturnMode } from "./VelodyneTypes";
 
+/**
+ * Parses a raw Velodyne UDP packet. The packet must be exactly 1206 bytes.
+ */
 export class RawPacket {
   static RAW_SCAN_SIZE = 3;
   static SCANS_PER_BLOCK = 32;
@@ -45,6 +48,19 @@ export class RawPacket {
     return RawPacket.InferModel(this.data);
   }
 
+  /**
+   * Converts the gpsTimestamp field to an absolute number of fractional seconds
+   * since the UNIX epoch. Since gpsTimestamp is relative to the top of the
+   * hour, the top of the hour can be specified. Otherwise, the most recent hour
+   * will be used
+   * @param topOfHour Optional Date representing the top of the hour the
+   *   gpsTimestamp is relative to. If unspecified, the most recent top of the
+   *   hour (relative to now) will be used
+   */
+  timestamp(topOfHour?: Date): number {
+    return RawPacket.GpsTimestampToTimestamp(this.gpsTimestamp, topOfHour);
+  }
+
   static InferModel(packet: Uint8Array): Model | undefined {
     const factoryId = packet[1205];
 
@@ -70,5 +86,23 @@ export class RawPacket {
       default:
         return undefined;
     }
+  }
+
+  /**
+   * Convert a gpsTimestamp field representing the number of microseconds since
+   * the top of the hour to an absolute timestamp as fractional seconds since
+   * the UNIX epoch
+   * @param gpsTimestamp Number of microseconds since the top of the hour. This
+   *   field is a member of the RawPacket class
+   * @param topOfHour Optional Date representing the top of the hour the
+   *   gpsTimestamp is relative to. If unspecified, the most recent top of the
+   *   hour (relative to now) will be used
+   */
+  static GpsTimestampToTimestamp(gpsTimestamp: number, topOfHour?: Date): number {
+    if (topOfHour == undefined) {
+      topOfHour = new Date();
+      topOfHour.setMinutes(0, 0, 0);
+    }
+    return +topOfHour / 1000 + gpsTimestamp / 1e-6;
   }
 }

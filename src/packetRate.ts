@@ -4,6 +4,12 @@
 
 import { Model } from "./VelodyneTypes";
 
+/**
+ * Returns the number of packets required to represent a full 360 degree scan
+ * for a given LIDAR hardware model
+ * @param model LIDAR hardware model
+ * @returns Number of packets required to represent a full 360 degree scan
+ */
 export function packetRate(model: Model): number {
   switch (model) {
     case Model.VLP16:

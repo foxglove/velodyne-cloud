@@ -14,3 +14,5 @@ overrides:
       - plugin:@foxglove/typescript
     parserOptions:
       project: ./tsconfig.json
+    rules:
+      "no-param-reassign": off

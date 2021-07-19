@@ -42,7 +42,22 @@ export class Transformer {
     this.maxAngle = maxAngle ?? 35999;
   }
 
-  unpack(raw: RawPacket, scanStamp: number, packetStamp: number, output: PointCloud): void {
+  /**
+   * Unpack a raw Velodyne packet into a destination PointCloud class.
+   * @param raw Velodyne packet
+   * @param scanStamp Timestamp of the first packet in the point cloud, as
+   *   fractional UNIX epoch seconds
+   * @param packetStamp Optional timestamp of the current packet in the point
+   *   cloud, as fractional UNIX epoch seconds. In unspecified, raw.timestamp()
+   *   will be used
+   */
+  unpack(
+    raw: RawPacket,
+    scanStamp: number,
+    packetStamp: number | undefined,
+    output: PointCloud,
+  ): void {
+    packetStamp ??= raw.timestamp();
     switch (raw.factoryId) {
       case FactoryId.VLP16:
       case FactoryId.VLP16HiRes:

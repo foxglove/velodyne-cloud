@@ -31,8 +31,18 @@ export type Point = {
   deltaNs: number;
 };
 
+/**
+ * PointCloud construction options
+ */
 export type PointCloudOptions = {
+  /**
+   * Timestamp of the first scan data in this PointCloud, represented as a
+   * floating point number of seconds since the epoch.
+   */
   stamp: number;
+  /**
+   * Maximum number of points this PointCloud will store.
+   */
   maxPoints: number;
 };
 
