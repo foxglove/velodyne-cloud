@@ -2,6 +2,8 @@
 
 > _TypeScript library for converting Velodyne LIDAR packet data to point clouds_
 
+[![npm version](https://img.shields.io/npm/v/@foxglove/velodyne-cloud.svg?style=flat)](https://www.npmjs.com/package/@foxglove/velodyne-cloud)
+
 ## Introduction
 
 [Velodyne](https://velodynelidar.com/) LIDAR hardware broadcasts a steady stream of UDP packets representing laser scan data. These raw packets need to be converted to point clouds using calibration data specific to each hardware model. This TypeScript library provides best-effort detection of Velodyne hardware model from analyzing packets and includes calibration data to automatically convert raw data into a 3D point cloud representation.
