@@ -6,7 +6,7 @@ import { benchmark } from "kelonio";
 
 import { Calibration } from "./Calibration";
 import { PointCloud } from "./PointCloud";
-import { RawPacket } from "./RawPacket";
+import { MAX_POINTS_PER_PACKET, RawPacket } from "./RawPacket";
 import { Transformer } from "./Transformer";
 import { Model } from "./VelodyneTypes";
 import { HDL32E_PACKET1 } from "./fixtures/packets";
@@ -25,7 +25,7 @@ describe("Transformer", () => {
     expect(transform.maxRange).toEqual(100);
 
     const raw = new RawPacket(HDL32E_PACKET1);
-    const cloud = new PointCloud({ stamp: 42, maxPoints: RawPacket.MAX_POINTS_PER_PACKET });
+    const cloud = new PointCloud({ stamp: 42, maxPoints: MAX_POINTS_PER_PACKET });
     transform.unpack(raw, 42, 42.1, cloud);
     cloud.trim();
 
@@ -65,7 +65,7 @@ describe("Transformer", () => {
   it.skip("has expected performance", async () => {
     const calibration = new Calibration(Model.HDL32E);
     const transform = new Transformer(calibration);
-    const maxPoints = RawPacket.MAX_POINTS_PER_PACKET * 100;
+    const maxPoints = MAX_POINTS_PER_PACKET * 100;
 
     await benchmark.record(
       ["Transformer", "HDL-32E"],

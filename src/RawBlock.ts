@@ -5,11 +5,13 @@
 import { BlockId } from "./VelodyneTypes";
 
 export class RawBlock {
-  view: DataView;
-  blockId: BlockId;
-  rotation: number; // [0-35999], divide by 100 to get degrees
+  declare data: Uint8Array;
+  declare view: DataView;
+  declare blockId: BlockId;
+  declare rotation: number; // [0-35999], divide by 100 to get degrees
 
-  constructor(public data: Uint8Array) {
+  constructor(data: Uint8Array) {
+    this.data = data;
     this.view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     this.blockId = this.view.getUint16(0, true);
     this.rotation = this.view.getUint16(2, true);

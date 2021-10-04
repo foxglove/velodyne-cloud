@@ -5,7 +5,7 @@
 import { Calibration } from "./Calibration";
 import { PointCloud } from "./PointCloud";
 import { RawBlock } from "./RawBlock";
-import { RawPacket } from "./RawPacket";
+import { BLOCKS_PER_PACKET, RawPacket, SCANS_PER_BLOCK } from "./RawPacket";
 import { BlockId, FactoryId, LaserCorrection, Model, ReturnMode } from "./VelodyneTypes";
 
 const VLP16_SCANS_PER_FIRING = 16;
@@ -24,11 +24,11 @@ export type TransformerOptions = {
 type Point = [x: number, y: number, z: number];
 
 export class Transformer {
-  calibration: Calibration;
-  minRange: number; // [m]
-  maxRange: number; // [m]
-  minAngle: number; // [0-35999], degrees as uint16
-  maxAngle: number; // [0-35999], degrees as uint16
+  declare calibration: Calibration;
+  declare minRange: number; // [m]
+  declare maxRange: number; // [m]
+  declare minAngle: number; // [0-35999], degrees as uint16
+  declare maxAngle: number; // [0-35999], degrees as uint16
 
   constructor(
     calibration: Calibration,
@@ -57,29 +57,25 @@ export class Transformer {
     packetStamp: number | undefined,
     output: PointCloud,
   ): void {
+    // eslint-disable-next-line no-param-reassign
     packetStamp ??= raw.timestamp();
     switch (raw.factoryId) {
       case FactoryId.VLP16:
       case FactoryId.VLP16HiRes:
-        return this._unpackVLP16(raw, scanStamp, packetStamp, output);
+        return this.#unpackVLP16(raw, scanStamp, packetStamp, output);
       case FactoryId.VLS128:
       case FactoryId.VLS128Old:
-        return this._unpackVLS128(raw, scanStamp, packetStamp, output);
+        return this.#unpackVLS128(raw, scanStamp, packetStamp, output);
       default:
-        return this._unpackGeneric(raw, scanStamp, packetStamp, output);
+        return this.#unpackGeneric(raw, scanStamp, packetStamp, output);
     }
   }
 
-  private _unpackGeneric(
-    raw: RawPacket,
-    scanStamp: number,
-    packetStamp: number,
-    output: PointCloud,
-  ): void {
+  #unpackGeneric(raw: RawPacket, scanStamp: number, packetStamp: number, output: PointCloud): void {
     const timeDiffStartToThisPacket = packetStamp - scanStamp;
     const xyz: Point = [0, 0, 0];
 
-    for (let i = 0; i < RawPacket.BLOCKS_PER_PACKET; i++) {
+    for (let i = 0; i < BLOCKS_PER_PACKET; i++) {
       const block = raw.blocks[i] as RawBlock;
       const rawRotation = block.rotation;
       // Discard blocks that are outside the area of interest
@@ -91,7 +87,7 @@ export class Transformer {
       // upper bank lasers are numbered [0..31], lower bank lasers are [32..63]
       const bankOrigin = block.isUpperBlock() ? 32 : 0;
 
-      for (let j = 0; j < RawPacket.SCANS_PER_BLOCK; j++) {
+      for (let j = 0; j < SCANS_PER_BLOCK; j++) {
         // Discard returns with invalid (zero) distance values
         if (!block.isValid(j)) {
           continue;
@@ -131,15 +127,10 @@ export class Transformer {
     }
   }
 
-  private _unpackVLS128(
-    raw: RawPacket,
-    scanStamp: number,
-    packetStamp: number,
-    output: PointCloud,
-  ): void {
+  #unpackVLS128(raw: RawPacket, scanStamp: number, packetStamp: number, output: PointCloud): void {
     const timeDiffStartToThisPacket = packetStamp - scanStamp;
     const dualReturn = raw.returnMode === ReturnMode.DualReturn ? 1 : 0;
-    const blockCount = RawPacket.BLOCKS_PER_PACKET - 4 * dualReturn;
+    const blockCount = BLOCKS_PER_PACKET - 4 * dualReturn;
     let azimuth = 0;
     let azimuthNext = 0;
     let azimuthDiff = 0;
@@ -158,7 +149,7 @@ export class Transformer {
       } else {
         azimuth = azimuthNext;
       }
-      if (i < RawPacket.BLOCKS_PER_PACKET - (1 + dualReturn)) {
+      if (i < BLOCKS_PER_PACKET - (1 + dualReturn)) {
         const nextBlock = raw.blocks[i + (1 + dualReturn)] as RawBlock;
         // Get the next block rotation to calculate how far we rotate between
         // blocks
@@ -173,10 +164,10 @@ export class Transformer {
         // This makes the assumption the difference between the last block and the
         // next packet is the same as the last to the second to last. Assumes RPM
         // doesn't change much between blocks
-        azimuthDiff = i === RawPacket.BLOCKS_PER_PACKET - 4 * dualReturn - 1 ? 0 : lastAzimuthDiff;
+        azimuthDiff = i === BLOCKS_PER_PACKET - 4 * dualReturn - 1 ? 0 : lastAzimuthDiff;
       }
 
-      for (let j = 0; j < RawPacket.SCANS_PER_BLOCK; j++) {
+      for (let j = 0; j < SCANS_PER_BLOCK; j++) {
         const rawDistance = block.distance(j);
         const distance = rawDistance * VLS128_DISTANCE_RESOLUTION;
         if (!distanceInRange(distance, this.minRange, this.maxRange)) {
@@ -224,24 +215,19 @@ export class Transformer {
     }
   }
 
-  private _unpackVLP16(
-    raw: RawPacket,
-    scanStamp: number,
-    packetStamp: number,
-    output: PointCloud,
-  ): void {
+  #unpackVLP16(raw: RawPacket, scanStamp: number, packetStamp: number, output: PointCloud): void {
     const timeDiffStartToThisPacket = packetStamp - scanStamp;
     let azimuthDiff = 0;
     let lastAzimuthDiff = 0;
     const xyz: Point = [0, 0, 0];
 
-    for (let i = 0; i < RawPacket.BLOCKS_PER_PACKET; i++) {
+    for (let i = 0; i < BLOCKS_PER_PACKET; i++) {
       const block = raw.blocks[i] as RawBlock;
       const rawRotation = block.rotation;
       const timingOffsetsRow = this.calibration.timingOffsets[i] ?? [];
 
       // Calculate difference between current and next block's azimuth angle
-      if (i < RawPacket.BLOCKS_PER_PACKET - 1) {
+      if (i < BLOCKS_PER_PACKET - 1) {
         const nextBlock = raw.blocks[i + 1] as RawBlock;
 
         const rawAzimuthDiff = nextBlock.rotation - block.rotation;
@@ -255,7 +241,7 @@ export class Transformer {
         azimuthDiff = lastAzimuthDiff;
       }
 
-      for (let j = 0; j < RawPacket.SCANS_PER_BLOCK; j++) {
+      for (let j = 0; j < SCANS_PER_BLOCK; j++) {
         const azimuthCorrected = vlp16AzimuthCorrected(block, j, azimuthDiff);
 
         // Discard points which are not in the area of interest

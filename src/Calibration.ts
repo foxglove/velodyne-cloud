@@ -5,29 +5,25 @@
 import { CalibrationData, loadCalibrationData } from "./CalibrationData";
 import { LaserCorrection, Model } from "./VelodyneTypes";
 
+const ROTATION_RESOLUTION = 0.01; // [deg]
+const ROTATION_MAX_UNITS = 36000; // [deg/100]
+const VLP16_DSR_TOFFSET = 2.304; // [µs]
+const VLP16_FIRING_TOFFSET = 55.296; // [µs]
+const HDL32E_DSR_TOFFSET = 1.152; // [µs]
+const HDL32E_FIRING_TOFFSET = 46.08; // [µs]
+const VLS128_DSR_TOFFSET = 2.665; // [µs]
+const VLS128_FIRING_TOFFSET = 53.5; // [µs]
+
 // Takes a calibration data file as input and computes cached lookup tables for
 // use in online point cloud conversion
 export class Calibration {
-  static ROTATION_RESOLUTION = 0.01; // [deg]
-  static ROTATION_MAX_UNITS = 36000; // [deg/100]
-
-  static VLP16_FIRINGS_PER_BLOCK = 2;
-  static VLP16_SCANS_PER_FIRING = 16;
-  static VLP16_BLOCK_TDURATION = 110.592; // [µs]
-  static VLP16_DSR_TOFFSET = 2.304; // [µs]
-  static VLP16_FIRING_TOFFSET = 55.296; // [µs]
-  static HDL32E_DSR_TOFFSET = 1.152; // [µs]
-  static HDL32E_FIRING_TOFFSET = 46.08; // [µs]
-  static VLS128_DSR_TOFFSET = 2.665; // [µs]
-  static VLS128_FIRING_TOFFSET = 53.5; // [µs]
-
-  readonly model: Model;
-  readonly laserCorrections: LaserCorrection[];
-  readonly distanceResolution: number; // [m]
-  readonly timingOffsets: number[][];
-  readonly sinRotTable: number[];
-  readonly cosRotTable: number[];
-  readonly vls128LaserAzimuthCache: number[];
+  declare readonly model: Model;
+  declare readonly laserCorrections: LaserCorrection[];
+  declare readonly distanceResolution: number; // [m]
+  declare readonly timingOffsets: number[][];
+  declare readonly sinRotTable: number[];
+  declare readonly cosRotTable: number[];
+  declare readonly vls128LaserAzimuthCache: number[];
 
   constructor(model: Model, calibrationData: CalibrationData = loadCalibrationData(model)) {
     this.model = model;
@@ -56,10 +52,10 @@ export class Calibration {
     this.timingOffsets = Calibration.BuildTimingsFor(model);
 
     // Set up cached values for sin and cos of all the possible headings
-    this.cosRotTable = Array<number>(Calibration.ROTATION_MAX_UNITS);
-    this.sinRotTable = Array<number>(Calibration.ROTATION_MAX_UNITS);
-    for (let i = 0; i < Calibration.ROTATION_MAX_UNITS; i++) {
-      const rotation = deg2rad(Calibration.ROTATION_RESOLUTION * i);
+    this.cosRotTable = Array<number>(ROTATION_MAX_UNITS);
+    this.sinRotTable = Array<number>(ROTATION_MAX_UNITS);
+    for (let i = 0; i < ROTATION_MAX_UNITS; i++) {
+      const rotation = deg2rad(ROTATION_RESOLUTION * i);
       this.cosRotTable[i] = Math.cos(rotation);
       this.sinRotTable[i] = Math.sin(rotation);
     }
@@ -83,23 +79,23 @@ export class Calibration {
     switch (model) {
       case Model.VLP16:
       case Model.VLP16HiRes: {
-        const full = Calibration.VLP16_FIRING_TOFFSET;
-        const single = Calibration.VLP16_DSR_TOFFSET;
+        const full = VLP16_FIRING_TOFFSET;
+        const single = VLP16_DSR_TOFFSET;
         return Calibration.BuildTimings(12, 32, full, single, 0, block16, point16);
       }
       case Model.VLP32C: {
-        const full = Calibration.VLP16_FIRING_TOFFSET;
-        const single = Calibration.VLP16_DSR_TOFFSET;
+        const full = VLP16_FIRING_TOFFSET;
+        const single = VLP16_DSR_TOFFSET;
         return Calibration.BuildTimings(12, 32, full, single, 0, block1, point2);
       }
       case Model.HDL32E: {
-        const full = Calibration.HDL32E_FIRING_TOFFSET;
-        const single = Calibration.HDL32E_DSR_TOFFSET;
+        const full = HDL32E_FIRING_TOFFSET;
+        const single = HDL32E_DSR_TOFFSET;
         return Calibration.BuildTimings(12, 32, full, single, 0, block1, point2);
       }
       case Model.VLS128: {
-        const full = Calibration.VLS128_FIRING_TOFFSET;
-        const single = Calibration.VLS128_DSR_TOFFSET;
+        const full = VLS128_FIRING_TOFFSET;
+        const single = VLS128_DSR_TOFFSET;
         return Calibration.BuildTimings(3, 17, full, single, -8.7, block1, point1);
       }
       default:

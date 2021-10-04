@@ -15,4 +15,4 @@ overrides:
     parserOptions:
       project: ./tsconfig.json
     rules:
-      "no-param-reassign": off
+      "@foxglove/no-private-identifier": off

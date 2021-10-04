@@ -2,8 +2,8 @@
   "include": ["./src/**/*.ts"],
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2020",
-    "lib": ["dom", "es2020"],
+    "target": "esnext",
+    "lib": ["dom", "esnext"],
     "rootDir": "./src",
     "outDir": "./dist",
 

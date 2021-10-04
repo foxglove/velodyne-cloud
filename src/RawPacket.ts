@@ -5,32 +5,34 @@
 import { RawBlock } from "./RawBlock";
 import { FactoryId, Model, ReturnMode } from "./VelodyneTypes";
 
+const RAW_SCAN_SIZE = 3;
+export const SCANS_PER_BLOCK = 32;
+const BLOCK_DATA_SIZE = SCANS_PER_BLOCK * RAW_SCAN_SIZE;
+const BLOCK_SIZE = BLOCK_DATA_SIZE + 4;
+export const BLOCKS_PER_PACKET = 12;
+export const MAX_POINTS_PER_PACKET = BLOCKS_PER_PACKET * SCANS_PER_BLOCK;
+
 /**
  * Parses a raw Velodyne UDP packet. The packet must be exactly 1206 bytes.
  */
 export class RawPacket {
-  static RAW_SCAN_SIZE = 3;
-  static SCANS_PER_BLOCK = 32;
-  static BLOCK_DATA_SIZE = RawPacket.SCANS_PER_BLOCK * RawPacket.RAW_SCAN_SIZE;
-  static BLOCK_SIZE = RawPacket.BLOCK_DATA_SIZE + 4;
-  static BLOCKS_PER_PACKET = 12;
-  static MAX_POINTS_PER_PACKET = RawPacket.BLOCKS_PER_PACKET * RawPacket.SCANS_PER_BLOCK;
+  declare data: Uint8Array;
+  declare blocks: RawBlock[];
+  declare gpsTimestamp: number; // microseconds since the top of the hour
+  declare factoryField1: number; // raw representation of ReturnMode
+  declare factoryField2: number; // raw representation of FactoryId
+  declare returnMode?: ReturnMode;
+  declare factoryId?: FactoryId;
 
-  blocks: RawBlock[];
-  gpsTimestamp: number; // microseconds since the top of the hour
-  factoryField1: number; // raw representation of ReturnMode
-  factoryField2: number; // raw representation of FactoryId
-  returnMode?: ReturnMode;
-  factoryId?: FactoryId;
-
-  constructor(public data: Uint8Array) {
+  constructor(data: Uint8Array) {
+    this.data = data;
     if (data.length !== 1206) {
       throw new Error(`data has invalid length ${data.length}, expected 1206`);
     }
 
     this.blocks = [];
-    for (let i = 0; i < RawPacket.BLOCKS_PER_PACKET; i++) {
-      const blockSize = RawPacket.BLOCK_SIZE;
+    for (let i = 0; i < BLOCKS_PER_PACKET; i++) {
+      const blockSize = BLOCK_SIZE;
       const blockData = new Uint8Array(data.buffer, data.byteOffset + blockSize * i, blockSize);
       this.blocks.push(new RawBlock(blockData));
     }
@@ -100,6 +102,7 @@ export class RawPacket {
    */
   static GpsTimestampToTimestamp(gpsTimestamp: number, topOfHour?: Date): number {
     if (topOfHour == undefined) {
+      // eslint-disable-next-line no-param-reassign
       topOfHour = new Date();
       topOfHour.setMinutes(0, 0, 0);
     }
