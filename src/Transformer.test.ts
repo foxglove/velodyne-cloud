@@ -2,10 +2,8 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { benchmark } from "kelonio";
-
 import { Calibration } from "./Calibration";
-import { PointCloud } from "./PointCloud";
+import { PointCloud, POINT_STEP } from "./PointCloud";
 import { MAX_POINTS_PER_PACKET, RawPacket } from "./RawPacket";
 import { Transformer } from "./Transformer";
 import { Model } from "./VelodyneTypes";
@@ -31,7 +29,7 @@ describe("Transformer", () => {
 
     expect(cloud.height).toEqual(1);
     expect(cloud.width).toEqual(382);
-    expect(cloud.data.byteLength).toEqual(382 * PointCloud.POINT_STEP);
+    expect(cloud.data.byteLength).toEqual(382 * POINT_STEP);
 
     const view = new DataView(cloud.data.buffer, cloud.data.byteOffset, cloud.data.byteLength);
     expect(view.getFloat32(0, true)).toEqual(-1.5504857301712036); // x
@@ -58,28 +56,4 @@ describe("Transformer", () => {
       expect(p.deltaNs).toBeLessThanOrEqual(2e8);
     }
   });
-
-  // CI performance is non-deterministic, a better approach will be to have dedicated machines
-  // and log performance over time to correlate regressions rather than gate
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("has expected performance", async () => {
-    const calibration = new Calibration(Model.HDL32E);
-    const transform = new Transformer(calibration);
-    const maxPoints = MAX_POINTS_PER_PACKET * 100;
-
-    await benchmark.record(
-      ["Transformer", "HDL-32E"],
-      () => {
-        const raw = new RawPacket(HDL32E_PACKET1);
-        const cloud = new PointCloud({ stamp: 0, maxPoints });
-        for (let i = 0; i < 100; i++) {
-          transform.unpack(raw, 0, 0, cloud);
-        }
-        cloud.trim();
-      },
-      { iterations: 10, meanUnder: 15 },
-    );
-
-    console.log(benchmark.report());
-  }, 10_000);
 });

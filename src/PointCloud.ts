@@ -46,7 +46,7 @@ export type PointCloudOptions = {
   maxPoints: number;
 };
 
-const POINT_STEP = 28;
+export const POINT_STEP = 28;
 
 export class PointCloud {
   declare readonly stamp: number;
