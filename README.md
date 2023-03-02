@@ -64,7 +64,7 @@ function createPointCloud(packets: VelodynePacket[]) {
 
 ## License
 
-@foxglove/velodyne-cloud is licensed under [MIT License](https://opensource.org/licenses/MIT).
+@foxglove/velodyne-cloud is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
 ## Releasing
 
