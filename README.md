@@ -8,7 +8,7 @@
 
 [Velodyne](https://velodynelidar.com/) LIDAR hardware broadcasts a steady stream of UDP packets representing laser scan data. These raw packets need to be converted to point clouds using calibration data specific to each hardware model. This TypeScript library provides best-effort detection of Velodyne hardware model from analyzing packets and includes calibration data to automatically convert raw data into a 3D point cloud representation.
 
-This library is used in [Foxglove Studio](https://foxglove.dev/) to convert [velodyne_msgs/VelodyneScan](http://docs.ros.org/en/indigo/api/velodyne_msgs/html/msg/VelodyneScan.html) ROS messages to [sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html) messages.
+This library is used by [Foxglove](https://foxglove.dev/) to convert [velodyne_msgs/VelodyneScan](http://docs.ros.org/en/indigo/api/velodyne_msgs/html/msg/VelodyneScan.html) ROS messages to [sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html) messages.
 
 ## Usage
 
