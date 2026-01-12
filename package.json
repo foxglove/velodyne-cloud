@@ -11,7 +11,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/foxglove/velodyne-cloud.git"
+    "url": "git+https://github.com/foxglove/velodyne-cloud.git"
   },
   "author": {
     "name": "Foxglove Technologies Inc",
